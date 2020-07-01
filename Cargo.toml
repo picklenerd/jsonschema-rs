@@ -22,11 +22,11 @@ regex = "1"
 base64 = ">= 0.2"
 chrono = ">= 0.2"
 rayon = "1"
-reqwest = { version = ">= 0.10", features = ["blocking", "json"]}
 parking_lot = ">= 0.1"
 num-cmp = ">= 0.1"
 paste = ">= 0.1"
 idna = ">= 0.2"
+attohttpc = { version = "0", features = ["json"] }
 
 [dev-dependencies]
 criterion = ">= 0.1"

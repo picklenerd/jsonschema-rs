@@ -142,7 +142,7 @@ pub enum ValidationErrorKind {
     /// When a required property is missing.
     Required { property: String },
     /// Any error that happens during network request via `reqwest` crate
-    Reqwest { error: reqwest::Error },
+    HTTP { error: attohttpc::Error },
     /// Resolved schema failed to compile.
     Schema,
     /// When the input value doesn't match one or multiple required types.
@@ -398,10 +398,10 @@ impl<'a> ValidationError<'a> {
             kind: ValidationErrorKind::Required { property },
         }
     }
-    pub(crate) fn reqwest(error: reqwest::Error) -> ValidationError<'a> {
+    pub(crate) fn http(error: attohttpc::Error) -> ValidationError<'a> {
         ValidationError {
             instance: Cow::Owned(Value::Null),
-            kind: ValidationErrorKind::Reqwest { error },
+            kind: ValidationErrorKind::HTTP { error },
         }
     }
     pub(crate) fn schema() -> ValidationError<'a> {
@@ -500,10 +500,10 @@ impl From<url::ParseError> for ValidationError<'_> {
         ValidationError::invalid_url(err)
     }
 }
-impl From<reqwest::Error> for ValidationError<'_> {
+impl From<attohttpc::Error> for ValidationError<'_> {
     #[inline]
-    fn from(err: reqwest::Error) -> Self {
-        ValidationError::reqwest(err)
+    fn from(err: attohttpc::Error) -> Self {
+        ValidationError::http(err)
     }
 }
 
@@ -515,7 +515,7 @@ impl fmt::Display for ValidationError<'_> {
         match &self.kind {
             ValidationErrorKind::Schema => write!(f, "Schema error"),
             ValidationErrorKind::JSONParse { error } => write!(f, "{}", error),
-            ValidationErrorKind::Reqwest { error } => write!(f, "{}", error),
+            ValidationErrorKind::HTTP { error } => write!(f, "{}", error),
             ValidationErrorKind::FileNotFound { error } => write!(f, "{}", error),
             ValidationErrorKind::InvalidURL { error } => write!(f, "{}", error),
             ValidationErrorKind::UnknownReferenceScheme { scheme } => {

@@ -6,6 +6,10 @@
 
 - `ToString` trait implementation for validators.
 
+### Changed
+
+- Replace `reqwest` with `attohttpc`.
+
 ### Fixed
 
 - ECMAScript regex support

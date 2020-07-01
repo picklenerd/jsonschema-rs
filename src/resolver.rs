@@ -44,7 +44,8 @@ impl<'a> Resolver<'a> {
                 Some(value) => Ok(Cow::Borrowed(value)),
                 None => match url.scheme() {
                     "http" | "https" => {
-                        let response = reqwest::blocking::get(url.as_str())?;
+                        let response = attohttpc::get(url).send()?;
+                        // let response = reqwest::blocking::get(url.as_str())?;
                         let document: Value = response.json()?;
                         Ok(Cow::Owned(document))
                     }
