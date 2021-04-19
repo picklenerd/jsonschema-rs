@@ -53,6 +53,7 @@ impl Validate for PropertiesValidator {
                         validators
                             .iter()
                             .flat_map(move |validator| validator.validate(schema, item))
+                            .map(move |error| error.with_property_name(name.clone()))
                     })
                 })
                 .collect();
