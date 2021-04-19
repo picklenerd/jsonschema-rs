@@ -9,6 +9,7 @@ use url::{ParseError, Url};
 pub(crate) struct CompilationContext<'a> {
     pub(crate) scope: Cow<'a, Url>,
     pub(crate) config: Cow<'a, CompilationOptions>,
+    pub(crate) curr_path: Vec<String>,
 }
 
 impl<'a> CompilationContext<'a> {
@@ -16,6 +17,8 @@ impl<'a> CompilationContext<'a> {
         CompilationContext {
             scope: Cow::Owned(scope),
             config,
+            // TODO: The capacity should be the average depth so we avoid extra allocations
+            curr_path: Vec::with_capacity(4),
         }
     }
 
@@ -36,11 +39,13 @@ impl<'a> CompilationContext<'a> {
             Ok(CompilationContext {
                 scope: Cow::Owned(scope),
                 config: Cow::Borrowed(&self.config),
+                curr_path: self.curr_path.clone(),
             })
         } else {
             Ok(CompilationContext {
                 scope: Cow::Borrowed(self.scope.as_ref()),
                 config: Cow::Borrowed(&self.config),
+                curr_path: self.curr_path.clone(),
             })
         }
     }

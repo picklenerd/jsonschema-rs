@@ -9,12 +9,15 @@ use serde_json::{Map, Value};
 
 pub(crate) struct MaximumU64Validator {
     limit: u64,
+    path: Vec<String>,
 }
 pub(crate) struct MaximumI64Validator {
     limit: i64,
+    path: Vec<String>,
 }
 pub(crate) struct MaximumF64Validator {
     limit: f64,
+    path: Vec<String>,
 }
 
 macro_rules! validate {
@@ -28,7 +31,11 @@ macro_rules! validate {
                 if self.is_valid(schema, instance) {
                     no_error()
                 } else {
-                    error(ValidationError::maximum(instance, self.limit as f64)) // do not cast
+                    error(ValidationError::maximum(
+                        self.path.clone(),
+                        instance,
+                        self.limit as f64,
+                    )) // do not cast
                 }
             }
 
@@ -76,7 +83,11 @@ impl Validate for MaximumF64Validator {
         if self.is_valid(schema, instance) {
             no_error()
         } else {
-            error(ValidationError::maximum(instance, self.limit))
+            error(ValidationError::maximum(
+                self.path.clone(),
+                instance,
+                self.limit,
+            ))
         }
     }
 }
@@ -90,16 +101,17 @@ impl ToString for MaximumF64Validator {
 pub(crate) fn compile(
     _: &Map<String, Value>,
     schema: &Value,
-    _: &CompilationContext,
+    context: &CompilationContext,
 ) -> Option<CompilationResult> {
+    let path = context.curr_path.clone();
     if let Value::Number(limit) = schema {
         if let Some(limit) = limit.as_u64() {
-            Some(Ok(Box::new(MaximumU64Validator { limit })))
+            Some(Ok(Box::new(MaximumU64Validator { limit, path })))
         } else if let Some(limit) = limit.as_i64() {
-            Some(Ok(Box::new(MaximumI64Validator { limit })))
+            Some(Ok(Box::new(MaximumI64Validator { limit, path })))
         } else {
             let limit = limit.as_f64().expect("Always valid");
-            Some(Ok(Box::new(MaximumF64Validator { limit })))
+            Some(Ok(Box::new(MaximumF64Validator { limit, path })))
         }
     } else {
         Some(Err(CompilationError::SchemaError))

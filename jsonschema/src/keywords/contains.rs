@@ -8,6 +8,7 @@ use serde_json::{Map, Value};
 
 pub(crate) struct ContainsValidator {
     validators: Validators,
+    path: Vec<String>,
 }
 
 impl ContainsValidator {
@@ -15,6 +16,7 @@ impl ContainsValidator {
     pub(crate) fn compile(schema: &Value, context: &CompilationContext) -> CompilationResult {
         Ok(Box::new(ContainsValidator {
             validators: compile_validators(schema, context)?,
+            path: context.curr_path.clone(),
         }))
     }
 }
@@ -48,7 +50,7 @@ impl Validate for ContainsValidator {
                     return no_error();
                 }
             }
-            error(ValidationError::contains(instance))
+            error(ValidationError::contains(self.path.clone(), instance))
         } else {
             no_error()
         }

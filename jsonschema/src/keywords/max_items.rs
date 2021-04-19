@@ -8,13 +8,14 @@ use serde_json::{Map, Value};
 
 pub(crate) struct MaxItemsValidator {
     limit: u64,
+    path: Vec<String>,
 }
 
 impl MaxItemsValidator {
     #[inline]
-    pub(crate) fn compile(schema: &Value) -> CompilationResult {
+    pub(crate) fn compile(schema: &Value, path: Vec<String>) -> CompilationResult {
         if let Some(limit) = schema.as_u64() {
-            Ok(Box::new(MaxItemsValidator { limit }))
+            Ok(Box::new(MaxItemsValidator { limit, path }))
         } else {
             Err(CompilationError::SchemaError)
         }
@@ -34,7 +35,11 @@ impl Validate for MaxItemsValidator {
     fn validate<'a>(&self, _: &'a JSONSchema, instance: &'a Value) -> ErrorIterator<'a> {
         if let Value::Array(items) = instance {
             if (items.len() as u64) > self.limit {
-                return error(ValidationError::max_items(instance, self.limit));
+                return error(ValidationError::max_items(
+                    self.path.clone(),
+                    instance,
+                    self.limit,
+                ));
             }
         }
         no_error()
@@ -51,7 +56,10 @@ impl ToString for MaxItemsValidator {
 pub(crate) fn compile(
     _: &Map<String, Value>,
     schema: &Value,
-    _: &CompilationContext,
+    context: &CompilationContext,
 ) -> Option<CompilationResult> {
-    Some(MaxItemsValidator::compile(schema))
+    Some(MaxItemsValidator::compile(
+        schema,
+        context.curr_path.clone(),
+    ))
 }

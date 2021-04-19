@@ -25,7 +25,6 @@ impl Draft {
     pub(crate) fn get_validator(self, keyword: &str) -> Option<CompileFunc> {
         match keyword {
             "additionalItems" => Some(keywords::additional_items::compile),
-            "additionalProperties" => Some(keywords::additional_properties::compile),
             "allOf" => Some(keywords::all_of::compile),
             "anyOf" => Some(keywords::any_of::compile),
             "const" => match self {
@@ -79,7 +78,6 @@ impl Draft {
             "oneOf" => Some(keywords::one_of::compile),
             "pattern" => Some(keywords::pattern::compile),
             "patternProperties" => Some(keywords::pattern_properties::compile),
-            "properties" => Some(keywords::properties::compile),
             "propertyNames" => match self {
                 Draft::Draft4 => None,
                 Draft::Draft6 | Draft::Draft7 => Some(keywords::property_names::compile),

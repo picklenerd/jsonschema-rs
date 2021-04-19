@@ -12,12 +12,14 @@ pub(crate) struct PropertiesValidator {
 
 impl PropertiesValidator {
     #[inline]
-    pub(crate) fn compile(schema: &Value, context: &CompilationContext) -> CompilationResult {
+    pub(crate) fn compile(schema: &Value, context: &mut CompilationContext) -> CompilationResult {
         match schema {
             Value::Object(map) => {
                 let mut properties = Vec::with_capacity(map.len());
                 for (key, subschema) in map {
+                    context.curr_path.push(key.clone());
                     properties.push((key.clone(), compile_validators(subschema, context)?));
+                    context.curr_path.pop();
                 }
                 Ok(Box::new(PropertiesValidator { properties }))
             }
@@ -76,7 +78,7 @@ impl ToString for PropertiesValidator {
 pub(crate) fn compile(
     parent: &Map<String, Value>,
     schema: &Value,
-    context: &CompilationContext,
+    context: &mut CompilationContext,
 ) -> Option<CompilationResult> {
     match parent.get("additionalProperties") {
         // This type of `additionalProperties` validator handles `properties` logic

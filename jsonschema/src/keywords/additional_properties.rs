@@ -73,11 +73,13 @@ macro_rules! disallow_property {
 
 fn compile_properties(
     map: &Map<String, Value>,
-    context: &CompilationContext,
+    context: &mut CompilationContext,
 ) -> Result<AHashMap<String, Validators>, CompilationError> {
     let mut properties = AHashMap::with_capacity(map.len());
     for (key, subschema) in map {
+        context.curr_path.push(key.clone());
         properties.insert(key.clone(), compile_validators(subschema, context)?);
+        context.curr_path.pop();
     }
     Ok(properties)
 }
@@ -209,7 +211,10 @@ pub(crate) struct AdditionalPropertiesNotEmptyFalseValidator {
 }
 impl AdditionalPropertiesNotEmptyFalseValidator {
     #[inline]
-    pub(crate) fn compile(properties: &Value, context: &CompilationContext) -> CompilationResult {
+    pub(crate) fn compile(
+        properties: &Value,
+        context: &mut CompilationContext,
+    ) -> CompilationResult {
         match properties {
             Value::Object(map) => Ok(Box::new(AdditionalPropertiesNotEmptyFalseValidator {
                 properties: compile_properties(map, context)?,
@@ -286,7 +291,7 @@ impl AdditionalPropertiesNotEmptyValidator {
     pub(crate) fn compile(
         schema: &Value,
         properties: &Value,
-        context: &CompilationContext,
+        context: &mut CompilationContext,
     ) -> CompilationResult {
         if let Value::Object(map) = properties {
             Ok(Box::new(AdditionalPropertiesNotEmptyValidator {
@@ -544,7 +549,7 @@ impl AdditionalPropertiesWithPatternsNotEmptyValidator {
         schema: &Value,
         properties: &Value,
         patterns: PatternedValidators,
-        context: &CompilationContext,
+        context: &mut CompilationContext,
     ) -> CompilationResult {
         if let Value::Object(map) = properties {
             Ok(Box::new(
@@ -673,7 +678,7 @@ impl AdditionalPropertiesWithPatternsNotEmptyFalseValidator {
     pub(crate) fn compile(
         properties: &Value,
         patterns: PatternedValidators,
-        context: &CompilationContext,
+        context: &mut CompilationContext,
     ) -> CompilationResult {
         if let Value::Object(map) = properties {
             Ok(Box::new(
@@ -758,7 +763,7 @@ impl ToString for AdditionalPropertiesWithPatternsNotEmptyFalseValidator {
 pub(crate) fn compile(
     parent: &Map<String, Value>,
     schema: &Value,
-    context: &CompilationContext,
+    context: &mut CompilationContext,
 ) -> Option<CompilationResult> {
     let properties = parent.get("properties");
     if let Some(patterns) = parent.get("patternProperties") {

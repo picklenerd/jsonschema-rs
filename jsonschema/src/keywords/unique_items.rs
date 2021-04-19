@@ -57,12 +57,14 @@ pub(crate) fn is_unique(items: &[Value]) -> bool {
     items.iter().map(HashedValue).all(move |x| seen.insert(x))
 }
 
-pub(crate) struct UniqueItemsValidator {}
+pub(crate) struct UniqueItemsValidator {
+    path: Vec<String>,
+}
 
 impl UniqueItemsValidator {
     #[inline]
-    pub(crate) fn compile() -> CompilationResult {
-        Ok(Box::new(UniqueItemsValidator {}))
+    pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+        Ok(Box::new(UniqueItemsValidator { path }))
     }
 }
 
@@ -80,7 +82,7 @@ impl Validate for UniqueItemsValidator {
         if self.is_valid(schema, instance) {
             no_error()
         } else {
-            error(ValidationError::unique_items(instance))
+            error(ValidationError::unique_items(self.path.clone(), instance))
         }
     }
 }
@@ -94,11 +96,11 @@ impl ToString for UniqueItemsValidator {
 pub(crate) fn compile(
     _: &Map<String, Value>,
     schema: &Value,
-    _: &CompilationContext,
+    context: &CompilationContext,
 ) -> Option<CompilationResult> {
     if let Value::Bool(value) = schema {
         if *value {
-            Some(UniqueItemsValidator::compile())
+            Some(UniqueItemsValidator::compile(context.curr_path.clone()))
         } else {
             None
         }

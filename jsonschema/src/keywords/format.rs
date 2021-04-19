@@ -34,10 +34,12 @@ lazy_static::lazy_static! {
 
 macro_rules! format_validator {
     ($validator:ident, $format_name:tt) => {
-        struct $validator {}
+        struct $validator {
+            path: Vec<String>,
+        }
         impl $validator {
-            pub(crate) fn compile() -> CompilationResult {
-                Ok(Box::new($validator {}))
+            pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+                Ok(Box::new($validator { path }))
             }
         }
 
@@ -54,7 +56,11 @@ macro_rules! validate {
         fn validate<'a>(&self, schema: &'a JSONSchema, instance: &'a Value) -> ErrorIterator<'a> {
             if let Value::String(_item) = instance {
                 if !self.is_valid(schema, instance) {
-                    return error(ValidationError::format(instance, $format));
+                    return error(ValidationError::format(
+                        self.path.clone(),
+                        instance,
+                        $format,
+                    ));
                 }
             }
             no_error()
@@ -286,36 +292,37 @@ pub(crate) fn compile(
 ) -> Option<CompilationResult> {
     if let Value::String(format) = schema {
         let draft_version = context.config.draft();
+        let path = context.curr_path.clone();
         match format.as_str() {
-            "date-time" => Some(DateTimeValidator::compile()),
-            "date" => Some(DateValidator::compile()),
-            "email" => Some(EmailValidator::compile()),
-            "hostname" => Some(HostnameValidator::compile()),
-            "idn-email" => Some(IDNEmailValidator::compile()),
+            "date-time" => Some(DateTimeValidator::compile(path)),
+            "date" => Some(DateValidator::compile(path)),
+            "email" => Some(EmailValidator::compile(path)),
+            "hostname" => Some(HostnameValidator::compile(path)),
+            "idn-email" => Some(IDNEmailValidator::compile(path)),
             "idn-hostname" if draft_version == Draft::Draft7 => {
-                Some(IDNHostnameValidator::compile())
+                Some(IDNHostnameValidator::compile(path))
             }
-            "ipv4" => Some(IpV4Validator::compile()),
-            "ipv6" => Some(IpV6Validator::compile()),
+            "ipv4" => Some(IpV4Validator::compile(path)),
+            "ipv6" => Some(IpV6Validator::compile(path)),
             "iri-reference" if draft_version == Draft::Draft7 => {
-                Some(IRIReferenceValidator::compile())
+                Some(IRIReferenceValidator::compile(path))
             }
-            "iri" if draft_version == Draft::Draft7 => Some(IRIValidator::compile()),
+            "iri" if draft_version == Draft::Draft7 => Some(IRIValidator::compile(path)),
             "json-pointer" if draft_version == Draft::Draft6 || draft_version == Draft::Draft7 => {
-                Some(JSONPointerValidator::compile())
+                Some(JSONPointerValidator::compile(path))
             }
-            "regex" => Some(RegexValidator::compile()),
+            "regex" => Some(RegexValidator::compile(path)),
             "relative-json-pointer" if draft_version == Draft::Draft7 => {
-                Some(RelativeJSONPointerValidator::compile())
+                Some(RelativeJSONPointerValidator::compile(path))
             }
-            "time" => Some(TimeValidator::compile()),
+            "time" => Some(TimeValidator::compile(path)),
             "uri-reference" if draft_version == Draft::Draft6 || draft_version == Draft::Draft7 => {
-                Some(URIReferenceValidator::compile())
+                Some(URIReferenceValidator::compile(path))
             }
             "uri-template" if draft_version == Draft::Draft6 || draft_version == Draft::Draft7 => {
-                Some(URITemplateValidator::compile())
+                Some(URITemplateValidator::compile(path))
             }
-            "uri" => Some(URIValidator::compile()),
+            "uri" => Some(URIValidator::compile(path)),
             _ => None,
         }
     } else {

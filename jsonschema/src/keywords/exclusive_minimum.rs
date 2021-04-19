@@ -9,12 +9,15 @@ use serde_json::{Map, Value};
 
 pub(crate) struct ExclusiveMinimumU64Validator {
     limit: u64,
+    path: Vec<String>,
 }
 pub(crate) struct ExclusiveMinimumI64Validator {
     limit: i64,
+    path: Vec<String>,
 }
 pub(crate) struct ExclusiveMinimumF64Validator {
     limit: f64,
+    path: Vec<String>,
 }
 
 macro_rules! validate {
@@ -29,6 +32,7 @@ macro_rules! validate {
                     no_error()
                 } else {
                     error(ValidationError::exclusive_minimum(
+                        self.path.clone(),
                         instance,
                         self.limit as f64,
                     ))
@@ -79,7 +83,11 @@ impl Validate for ExclusiveMinimumF64Validator {
         if self.is_valid(schema, instance) {
             no_error()
         } else {
-            error(ValidationError::exclusive_minimum(instance, self.limit))
+            error(ValidationError::exclusive_minimum(
+                self.path.clone(),
+                instance,
+                self.limit,
+            ))
         }
     }
 }
@@ -93,16 +101,25 @@ impl ToString for ExclusiveMinimumF64Validator {
 pub(crate) fn compile(
     _: &Map<String, Value>,
     schema: &Value,
-    _: &CompilationContext,
+    context: &CompilationContext,
 ) -> Option<CompilationResult> {
     if let Value::Number(limit) = schema {
         if let Some(limit) = limit.as_u64() {
-            Some(Ok(Box::new(ExclusiveMinimumU64Validator { limit })))
+            Some(Ok(Box::new(ExclusiveMinimumU64Validator {
+                limit,
+                path: context.curr_path.clone(),
+            })))
         } else if let Some(limit) = limit.as_i64() {
-            Some(Ok(Box::new(ExclusiveMinimumI64Validator { limit })))
+            Some(Ok(Box::new(ExclusiveMinimumI64Validator {
+                limit,
+                path: context.curr_path.clone(),
+            })))
         } else {
             let limit = limit.as_f64().expect("Always valid");
-            Some(Ok(Box::new(ExclusiveMinimumF64Validator { limit })))
+            Some(Ok(Box::new(ExclusiveMinimumF64Validator {
+                limit,
+                path: context.curr_path.clone(),
+            })))
         }
     } else {
         Some(Err(CompilationError::SchemaError))

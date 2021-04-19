@@ -10,11 +10,12 @@ use std::convert::TryFrom;
 
 pub(crate) struct MultipleTypesValidator {
     types: PrimitiveTypesBitMap,
+    path: Vec<String>,
 }
 
 impl MultipleTypesValidator {
     #[inline]
-    pub(crate) fn compile(items: &[Value]) -> CompilationResult {
+    pub(crate) fn compile(items: &[Value], path: Vec<String>) -> CompilationResult {
         let mut types = PrimitiveTypesBitMap::new();
         for item in items {
             match item {
@@ -28,7 +29,7 @@ impl MultipleTypesValidator {
                 _ => return Err(CompilationError::SchemaError),
             }
         }
-        Ok(Box::new(MultipleTypesValidator { types }))
+        Ok(Box::new(MultipleTypesValidator { types, path }))
     }
 }
 
@@ -50,7 +51,11 @@ impl Validate for MultipleTypesValidator {
         if self.is_valid(schema, instance) {
             no_error()
         } else {
-            error(ValidationError::multiple_type_error(instance, self.types))
+            error(ValidationError::multiple_type_error(
+                self.path.clone(),
+                instance,
+                self.types,
+            ))
         }
     }
 }
@@ -68,12 +73,14 @@ impl ToString for MultipleTypesValidator {
     }
 }
 
-pub(crate) struct NullTypeValidator {}
+pub(crate) struct NullTypeValidator {
+    path: Vec<String>,
+}
 
 impl NullTypeValidator {
     #[inline]
-    pub(crate) fn compile() -> CompilationResult {
-        Ok(Box::new(NullTypeValidator {}))
+    pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+        Ok(Box::new(NullTypeValidator { path }))
     }
 }
 
@@ -86,6 +93,7 @@ impl Validate for NullTypeValidator {
             no_error()
         } else {
             error(ValidationError::single_type_error(
+                self.path.clone(),
                 instance,
                 PrimitiveType::Null,
             ))
@@ -99,12 +107,14 @@ impl ToString for NullTypeValidator {
     }
 }
 
-pub(crate) struct BooleanTypeValidator {}
+pub(crate) struct BooleanTypeValidator {
+    path: Vec<String>,
+}
 
 impl BooleanTypeValidator {
     #[inline]
-    pub(crate) fn compile() -> CompilationResult {
-        Ok(Box::new(BooleanTypeValidator {}))
+    pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+        Ok(Box::new(BooleanTypeValidator { path }))
     }
 }
 
@@ -117,6 +127,7 @@ impl Validate for BooleanTypeValidator {
             no_error()
         } else {
             error(ValidationError::single_type_error(
+                self.path.clone(),
                 instance,
                 PrimitiveType::Boolean,
             ))
@@ -130,12 +141,14 @@ impl ToString for BooleanTypeValidator {
     }
 }
 
-pub(crate) struct StringTypeValidator {}
+pub(crate) struct StringTypeValidator {
+    path: Vec<String>,
+}
 
 impl StringTypeValidator {
     #[inline]
-    pub(crate) fn compile() -> CompilationResult {
-        Ok(Box::new(StringTypeValidator {}))
+    pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+        Ok(Box::new(StringTypeValidator { path }))
     }
 }
 
@@ -149,6 +162,7 @@ impl Validate for StringTypeValidator {
             no_error()
         } else {
             error(ValidationError::single_type_error(
+                self.path.clone(),
                 instance,
                 PrimitiveType::String,
             ))
@@ -161,12 +175,14 @@ impl ToString for StringTypeValidator {
     }
 }
 
-pub(crate) struct ArrayTypeValidator {}
+pub(crate) struct ArrayTypeValidator {
+    path: Vec<String>,
+}
 
 impl ArrayTypeValidator {
     #[inline]
-    pub(crate) fn compile() -> CompilationResult {
-        Ok(Box::new(ArrayTypeValidator {}))
+    pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+        Ok(Box::new(ArrayTypeValidator { path }))
     }
 }
 
@@ -180,6 +196,7 @@ impl Validate for ArrayTypeValidator {
             no_error()
         } else {
             error(ValidationError::single_type_error(
+                self.path.clone(),
                 instance,
                 PrimitiveType::Array,
             ))
@@ -193,12 +210,14 @@ impl ToString for ArrayTypeValidator {
     }
 }
 
-pub(crate) struct ObjectTypeValidator {}
+pub(crate) struct ObjectTypeValidator {
+    path: Vec<String>,
+}
 
 impl ObjectTypeValidator {
     #[inline]
-    pub(crate) fn compile() -> CompilationResult {
-        Ok(Box::new(ObjectTypeValidator {}))
+    pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+        Ok(Box::new(ObjectTypeValidator { path }))
     }
 }
 
@@ -211,6 +230,7 @@ impl Validate for ObjectTypeValidator {
             no_error()
         } else {
             error(ValidationError::single_type_error(
+                self.path.clone(),
                 instance,
                 PrimitiveType::Object,
             ))
@@ -224,12 +244,14 @@ impl ToString for ObjectTypeValidator {
     }
 }
 
-pub(crate) struct NumberTypeValidator {}
+pub(crate) struct NumberTypeValidator {
+    path: Vec<String>,
+}
 
 impl NumberTypeValidator {
     #[inline]
-    pub(crate) fn compile() -> CompilationResult {
-        Ok(Box::new(NumberTypeValidator {}))
+    pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+        Ok(Box::new(NumberTypeValidator { path }))
     }
 }
 
@@ -242,6 +264,7 @@ impl Validate for NumberTypeValidator {
             no_error()
         } else {
             error(ValidationError::single_type_error(
+                self.path.clone(),
                 instance,
                 PrimitiveType::Number,
             ))
@@ -253,12 +276,14 @@ impl ToString for NumberTypeValidator {
         "type: number".to_string()
     }
 }
-pub(crate) struct IntegerTypeValidator {}
+pub(crate) struct IntegerTypeValidator {
+    path: Vec<String>,
+}
 
 impl IntegerTypeValidator {
     #[inline]
-    pub(crate) fn compile() -> CompilationResult {
-        Ok(Box::new(IntegerTypeValidator {}))
+    pub(crate) fn compile(path: Vec<String>) -> CompilationResult {
+        Ok(Box::new(IntegerTypeValidator { path }))
     }
 }
 
@@ -275,6 +300,7 @@ impl Validate for IntegerTypeValidator {
             no_error()
         } else {
             error(ValidationError::single_type_error(
+                self.path.clone(),
                 instance,
                 PrimitiveType::Integer,
             ))
@@ -296,34 +322,35 @@ fn is_integer(num: &Number) -> bool {
 pub(crate) fn compile(
     _: &Map<String, Value>,
     schema: &Value,
-    _: &CompilationContext,
+    context: &CompilationContext,
 ) -> Option<CompilationResult> {
+    let path = context.curr_path.clone();
     match schema {
-        Value::String(item) => compile_single_type(item.as_str()),
+        Value::String(item) => compile_single_type(item.as_str(), path),
         Value::Array(items) => {
             if items.len() == 1 {
                 if let Some(Value::String(item)) = items.iter().next() {
-                    compile_single_type(item.as_str())
+                    compile_single_type(item.as_str(), path)
                 } else {
                     Some(Err(CompilationError::SchemaError))
                 }
             } else {
-                Some(MultipleTypesValidator::compile(items))
+                Some(MultipleTypesValidator::compile(items, path))
             }
         }
         _ => Some(Err(CompilationError::SchemaError)),
     }
 }
 
-fn compile_single_type(item: &str) -> Option<CompilationResult> {
+fn compile_single_type(item: &str, path: Vec<String>) -> Option<CompilationResult> {
     match PrimitiveType::try_from(item) {
-        Ok(PrimitiveType::Array) => Some(ArrayTypeValidator::compile()),
-        Ok(PrimitiveType::Boolean) => Some(BooleanTypeValidator::compile()),
-        Ok(PrimitiveType::Integer) => Some(IntegerTypeValidator::compile()),
-        Ok(PrimitiveType::Null) => Some(NullTypeValidator::compile()),
-        Ok(PrimitiveType::Number) => Some(NumberTypeValidator::compile()),
-        Ok(PrimitiveType::Object) => Some(ObjectTypeValidator::compile()),
-        Ok(PrimitiveType::String) => Some(StringTypeValidator::compile()),
+        Ok(PrimitiveType::Array) => Some(ArrayTypeValidator::compile(path)),
+        Ok(PrimitiveType::Boolean) => Some(BooleanTypeValidator::compile(path)),
+        Ok(PrimitiveType::Integer) => Some(IntegerTypeValidator::compile(path)),
+        Ok(PrimitiveType::Null) => Some(NullTypeValidator::compile(path)),
+        Ok(PrimitiveType::Number) => Some(NumberTypeValidator::compile(path)),
+        Ok(PrimitiveType::Object) => Some(ObjectTypeValidator::compile(path)),
+        Ok(PrimitiveType::String) => Some(StringTypeValidator::compile(path)),
         Err(()) => Some(Err(CompilationError::SchemaError)),
     }
 }

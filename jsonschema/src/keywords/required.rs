@@ -8,11 +8,12 @@ use serde_json::{Map, Value};
 
 pub(crate) struct RequiredValidator {
     required: Vec<String>,
+    path: Vec<String>,
 }
 
 impl RequiredValidator {
     #[inline]
-    pub(crate) fn compile(schema: &Value) -> CompilationResult {
+    pub(crate) fn compile(schema: &Value, path: Vec<String>) -> CompilationResult {
         match schema {
             Value::Array(items) => {
                 let mut required = Vec::with_capacity(items.len());
@@ -22,7 +23,7 @@ impl RequiredValidator {
                         _ => return Err(CompilationError::SchemaError),
                     }
                 }
-                Ok(Box::new(RequiredValidator { required }))
+                Ok(Box::new(RequiredValidator { required, path }))
             }
             _ => Err(CompilationError::SchemaError),
         }
@@ -44,7 +45,11 @@ impl Validate for RequiredValidator {
         if let Value::Object(item) = instance {
             for property_name in &self.required {
                 if !item.contains_key(property_name) {
-                    return error(ValidationError::required(instance, property_name.clone()));
+                    return error(ValidationError::required(
+                        self.path.clone(),
+                        instance,
+                        property_name.clone(),
+                    ));
                 }
             }
         }
@@ -62,7 +67,10 @@ impl ToString for RequiredValidator {
 pub(crate) fn compile(
     _: &Map<String, Value>,
     schema: &Value,
-    _: &CompilationContext,
+    context: &CompilationContext,
 ) -> Option<CompilationResult> {
-    Some(RequiredValidator::compile(schema))
+    Some(RequiredValidator::compile(
+        schema,
+        context.curr_path.clone(),
+    ))
 }

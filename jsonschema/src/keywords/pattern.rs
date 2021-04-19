@@ -16,17 +16,19 @@ lazy_static::lazy_static! {
 pub(crate) struct PatternValidator {
     original: String,
     pattern: Regex,
+    path: Vec<String>,
 }
 
 impl PatternValidator {
     #[inline]
-    pub(crate) fn compile(pattern: &Value) -> CompilationResult {
+    pub(crate) fn compile(pattern: &Value, path: Vec<String>) -> CompilationResult {
         match pattern {
             Value::String(item) => {
                 let pattern = convert_regex(item)?;
                 Ok(Box::new(PatternValidator {
                     original: item.clone(),
                     pattern,
+                    path,
                 }))
             }
             _ => Err(CompilationError::SchemaError),
@@ -38,7 +40,11 @@ impl Validate for PatternValidator {
     fn validate<'a>(&self, _: &'a JSONSchema, instance: &'a Value) -> ErrorIterator<'a> {
         if let Value::String(item) = instance {
             if !self.pattern.is_match(item) {
-                return error(ValidationError::pattern(instance, self.original.clone()));
+                return error(ValidationError::pattern(
+                    self.path.clone(),
+                    instance,
+                    self.original.clone(),
+                ));
             }
         }
         no_error()
@@ -121,9 +127,9 @@ fn replace_control_group(captures: &Captures) -> String {
 pub(crate) fn compile(
     _: &Map<String, Value>,
     schema: &Value,
-    _: &CompilationContext,
+    context: &CompilationContext,
 ) -> Option<CompilationResult> {
-    Some(PatternValidator::compile(schema))
+    Some(PatternValidator::compile(schema, context.curr_path.clone()))
 }
 
 #[cfg(test)]

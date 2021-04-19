@@ -8,6 +8,7 @@ use serde_json::{Map, Value};
 
 pub(crate) struct OneOfValidator {
     schemas: Vec<Validators>,
+    path: Vec<String>,
 }
 
 impl OneOfValidator {
@@ -18,7 +19,10 @@ impl OneOfValidator {
             for item in items {
                 schemas.push(compile_validators(item, context)?)
             }
-            Ok(Box::new(OneOfValidator { schemas }))
+            Ok(Box::new(OneOfValidator {
+                schemas,
+                path: context.curr_path.clone(),
+            }))
         } else {
             Err(CompilationError::SchemaError)
         }
@@ -68,11 +72,17 @@ impl Validate for OneOfValidator {
         let first_valid_idx = self.get_first_valid(schema, instance);
         if let Some(idx) = first_valid_idx {
             if self.are_others_valid(schema, instance, idx) {
-                return error(ValidationError::one_of_multiple_valid(instance));
+                return error(ValidationError::one_of_multiple_valid(
+                    self.path.clone(),
+                    instance,
+                ));
             }
             no_error()
         } else {
-            error(ValidationError::one_of_not_valid(instance))
+            error(ValidationError::one_of_not_valid(
+                self.path.clone(),
+                instance,
+            ))
         }
     }
 }

@@ -19,7 +19,10 @@ impl DependenciesValidator {
             let mut dependencies = Vec::with_capacity(map.len());
             for (key, subschema) in map {
                 let s = match subschema {
-                    Value::Array(_) => vec![RequiredValidator::compile(subschema)?],
+                    Value::Array(_) => vec![RequiredValidator::compile(
+                        subschema,
+                        context.curr_path.clone(),
+                    )?],
                     _ => compile_validators(subschema, context)?,
                 };
                 dependencies.push((key.clone(), s))
